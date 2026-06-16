@@ -47,21 +47,26 @@ export async function registerAction(
 }
 
 export async function sendToTelegram(text: string) {
-	const token = '8575418688:AAGo4tPdNzTdJ0pgzo2i9viA18ITf6ShbyQ';
-	const chatId = '7194902603';
-	await fetch(
+	const token = process.env.TELEGRAM_BOT_TOKEN!;
+	const chatId = process.env.TELEGRAM_CHAT_ID!;
+
+	const res = await fetch(
 		`https://api.telegram.org/bot${token}/sendMessage`,
 		{
 			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-			},
+			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
 				chat_id: chatId,
 				text,
 			}),
 		}
 	);
+
+	const data = await res.json();
+
+	if (!data.ok) {
+		console.error('Telegram error:', data);
+	}
 }
 
 export async function loginAction(
