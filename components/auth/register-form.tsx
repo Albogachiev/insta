@@ -1,12 +1,11 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, CircleHelp } from 'lucide-react';
 import { AuthInput, AuthSelect } from '@/components/auth/auth-input';
 import { MetaLogo } from '@/components/instagram/meta-logo';
 import { registerAction } from '@/lib/actions/auth';
-import type { AuthState } from '@/lib/actions/auth-types';
 
 const MONTHS = [
 	'January',
@@ -26,10 +25,31 @@ const MONTHS = [
 const DAYS = Array.from({ length: 31 }, (_, i) => i + 1);
 const YEARS = Array.from({ length: 100 }, (_, i) => new Date().getFullYear() - i);
 
-const initialState: AuthState = {};
-
 export function RegisterForm() {
-	const [state, formAction, isPending] = useActionState(registerAction, initialState);
+	const [error, setError] = useState('');
+	const [isPending, setIsPending] = useState(false);
+
+	async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+		event.preventDefault();
+		setError('');
+		setIsPending(true);
+
+		try {
+			const formData = new FormData(event.currentTarget);
+			const result = await registerAction(formData);
+
+			if (result.error) {
+				setError(result.error);
+				setIsPending(false);
+				return;
+			}
+
+			window.location.href = '/feed';
+		} catch (error) {
+			setError(error instanceof Error ? error.message : 'An unexpected error occurred.');
+			setIsPending(false);
+		}
+	}
 
 	return (
 		<div className="flex w-full flex-col gap-5">
@@ -51,7 +71,7 @@ export function RegisterForm() {
 				</p>
 			</div>
 
-			<form action={formAction} className="flex flex-col gap-4">
+			<form onSubmit={handleSubmit} className="flex flex-col gap-4">
 				<div>
 					<AuthInput
 						id="email"
@@ -143,9 +163,9 @@ export function RegisterForm() {
 					required
 				/>
 
-				{state.error && (
+				{error && (
 					<p className="text-center text-sm text-[#ff6b6b]" role="alert">
-						{state.error}
+						{error}
 					</p>
 				)}
 

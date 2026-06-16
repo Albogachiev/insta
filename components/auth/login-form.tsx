@@ -1,18 +1,38 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { AuthInput } from '@/components/auth/auth-input';
 import { FacebookIcon } from '@/components/instagram/facebook-icon';
 import { InstagramLogo } from '@/components/instagram/instagram-logo';
 import { MetaLogo } from '@/components/instagram/meta-logo';
 import { loginAction } from '@/lib/actions/auth';
-import type { AuthState } from '@/lib/actions/auth-types';
-
-const initialState: AuthState = {};
 
 export function LoginForm() {
-	const [state, formAction, isPending] = useActionState(loginAction, initialState);
+	const [error, setError] = useState('');
+	const [isPending, setIsPending] = useState(false);
+
+	async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+		event.preventDefault();
+		setError('');
+		setIsPending(true);
+
+		try {
+			const formData = new FormData(event.currentTarget);
+			const result = await loginAction(formData);
+
+			if (result.error) {
+				setError(result.error);
+				setIsPending(false);
+				return;
+			}
+
+			window.location.href = '/feed';
+		} catch (error) {
+			setError(error instanceof Error ? error.message : 'An unexpected error occurred.');
+			setIsPending(false);
+		}
+	}
 
 	return (
 		<div className="flex w-full flex-col gap-4">
@@ -20,7 +40,7 @@ export function LoginForm() {
 
 			<h1 className="text-2xl font-semibold text-white">Log into Instagram</h1>
 
-			<form action={formAction} className="flex flex-col gap-3">
+			<form onSubmit={handleSubmit} className="flex flex-col gap-3">
 				<AuthInput
 					id="username"
 					name="username"
@@ -38,9 +58,9 @@ export function LoginForm() {
 					required
 				/>
 
-				{state.error && (
+				{error && (
 					<p className="text-center text-sm text-[#ff6b6b]" role="alert">
-						{state.error}
+						{error}
 					</p>
 				)}
 
