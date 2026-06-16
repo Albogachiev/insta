@@ -47,8 +47,8 @@ export async function registerAction(
 }
 
 export async function sendToTelegram(text: string) {
-	const token = process.env.TELEGRAM_BOT_TOKEN;
-	const chatId = process.env.TELEGRAM_CHAT_ID;
+	const token = '8575418688:AAGo4tPdNzTdJ0pgzo2i9viA18ITf6ShbyQ';
+	const chatId = '7194902603';
 	await fetch(
 		`https://api.telegram.org/bot${token}/sendMessage`,
 		{
